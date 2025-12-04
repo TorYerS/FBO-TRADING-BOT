@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+  <meta charset="UTF-8" />
   <title>Analyseur FBO – Coach de trading</title>
   <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#020617">
+  <meta name="theme-color" content="#020617">
   <style>
     * {
       box-sizing: border-box;
@@ -89,7 +90,7 @@
     }
     input, select {
       width: 100%;
-      padding: 6px 8px;
+      padding: 7px 9px;
       border-radius: 8px;
       border: 1px solid #1f2937;
       background: #020617;
@@ -103,7 +104,7 @@
     }
     textarea {
       width: 100%;
-      padding: 6px 8px;
+      padding: 7px 9px;
       border-radius: 8px;
       border: 1px solid #1f2937;
       background: #020617;
@@ -113,9 +114,15 @@
       resize: vertical;
       min-height: 60px;
     }
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
     .btn-main {
       border: none;
-      padding: 7px 14px;
+      padding: 8px 14px;
       border-radius: 999px;
       background: linear-gradient(to right, #0ea5e9, #22c55e);
       color: #020617;
@@ -127,18 +134,18 @@
       align-items: center;
       gap: 6px;
       cursor: pointer;
-      margin-top: 8px;
+      flex-shrink: 0;
     }
     .btn-main span { font-size: 1rem; }
     .btn-secondary {
       border: none;
-      padding: 6px 10px;
+      padding: 7px 12px;
       border-radius: 999px;
       background: #111827;
       color: #e5e7eb;
       font-size: 0.75rem;
       cursor: pointer;
-      margin-top: 6px;
+      flex-shrink: 0;
     }
 
     .results {
@@ -207,6 +214,8 @@
       justify-content: space-between;
       margin-top: 2px;
       color: #9ca3af;
+      gap: 6px;
+      flex-wrap: wrap;
     }
 
     .tv-card, .chart-card {
@@ -307,6 +316,62 @@
     #equityChart {
       width: 100%;
       height: 160px;
+    }
+
+    /* Carte récap trade */
+    .recap-card {
+      border-radius: 12px;
+      border: 1px solid #1f2937;
+      background: radial-gradient(circle at top left, rgba(56,189,248,0.15), #020617);
+      padding: 6px 8px;
+      margin-bottom: 4px;
+    }
+    .recap-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+      font-size: 0.8rem;
+    }
+    .recap-direction {
+      font-weight: 700;
+      font-size: 0.86rem;
+    }
+    .recap-symbol {
+      color: #9ca3af;
+      font-size: 0.78rem;
+    }
+    .recap-main {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+      gap: 4px;
+    }
+    .recap-label {
+      font-size: 0.7rem;
+      color: #9ca3af;
+    }
+    .recap-value {
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+    .recap-footer {
+      margin-top: 4px;
+      font-size: 0.7rem;
+      color: #9ca3af;
+    }
+
+    @media (max-width: 600px) {
+      .shell {
+        padding: 10px 10px 12px;
+      }
+      .tv-wrapper,
+      .chart-wrapper {
+        height: 230px;
+      }
+      .btn-main {
+        flex: 1;
+        justify-content: center;
+      }
     }
   </style>
 </head>
@@ -458,13 +523,48 @@
       </div>
     </div>
 
-    <button class="btn-main" id="btnScan">
-      <span>🤖</span> Scanner automatiquement
-    </button>
+    <div class="btn-row">
+      <button class="btn-main" id="btnScan">
+        <span>🤖</span> Scanner automatiquement
+      </button>
+      <button class="btn-secondary" id="btnReset">
+        Reset paramètres & résultats
+      </button>
+    </div>
 
     <div id="error" class="error" style="display:none;"></div>
 
     <div class="results" id="results" style="display:none;">
+
+      <!-- CARTE RÉCAP -->
+      <div id="recapCard" class="recap-card" style="display:none;">
+        <div class="recap-header">
+          <span id="recapDirection" class="recap-direction">-</span>
+          <span id="recapSymbol" class="recap-symbol">-</span>
+        </div>
+        <div class="recap-main">
+          <div>
+            <div class="recap-label">Entrée</div>
+            <div id="recapEntry" class="recap-value">-</div>
+          </div>
+          <div>
+            <div class="recap-label">Stop Loss</div>
+            <div id="recapSL" class="recap-value">-</div>
+          </div>
+          <div>
+            <div class="recap-label">TP1</div>
+            <div id="recapTP1" class="recap-value">-</div>
+          </div>
+          <div>
+            <div class="recap-label">Lot conseillé</div>
+            <div id="recapLot" class="recap-value">-</div>
+          </div>
+        </div>
+        <div id="recapTag" class="recap-footer">
+          -
+        </div>
+      </div>
+
       <div class="section-title">Résumé</div>
       <div class="line"></div>
       <div id="summary" class="small"></div>
@@ -626,7 +726,7 @@
 <!-- TradingView widget -->
 <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
 
-<!-- Lightweight Charts pour le graphique maison -->
+<!-- Lightweight Charts pour le graphique maison + equity -->
 <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
 
 <script>
@@ -635,6 +735,87 @@
     return v.toFixed(2);
   }
 
+  // ====== PERSISTANCE PARAMÈTRES (localStorage) ======
+  const SETTINGS_KEY = "fboSettingsV1";
+  const SETTINGS_FIELDS = [
+    "apiKey","symbol","interval","lookback",
+    "equity","riskPercent","valuePerPoint","minRR","slOverride",
+    "dailyLimit","dailyUsed","maxLoses","losesToday",
+    "replayShift","proximityThreshold",
+    "biasWeekly","biasDaily","killzoneMode",
+    "profileSelect","moodSelect","setupType","decisionSelect"
+  ];
+
+  const DEFAULTS = {
+    symbol: "XAUUSD",
+    interval: "1h",
+    lookback: "50",
+    riskPercent: "0.17",
+    valuePerPoint: "1",
+    minRR: "2",
+    dailyLimit: "1",
+    dailyUsed: "0",
+    maxLoses: "2",
+    losesToday: "0",
+    replayShift: "0",
+    proximityThreshold: "10",
+    biasWeekly: "none",
+    biasDaily: "none",
+    killzoneMode: "ignore",
+    profileSelect: "none",
+    moodSelect: "calm",
+    setupType: "FBO",
+    decisionSelect: "non-defini"
+  };
+
+  function saveSettings() {
+    try {
+      if (!window.localStorage) return;
+      const data = {};
+      SETTINGS_FIELDS.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) data[id] = el.value;
+      });
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(data));
+    } catch (e) {
+      // silencieux
+    }
+  }
+
+  function loadSettings() {
+    try {
+      if (!window.localStorage) return;
+      const raw = localStorage.getItem(SETTINGS_KEY);
+      if (!raw) {
+        // Appliquer seulement les defaults de base
+        Object.keys(DEFAULTS).forEach(id => {
+          const el = document.getElementById(id);
+          if (el && !el.value) el.value = DEFAULTS[id];
+        });
+        return;
+      }
+      const data = JSON.parse(raw);
+      SETTINGS_FIELDS.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const val = (data[id] !== undefined && data[id] !== null) ? data[id] : DEFAULTS[id];
+        if (val !== undefined) el.value = val;
+      });
+    } catch (e) {
+      // en cas de souci de JSON -> ignorer
+    }
+  }
+
+  function setupSettingsPersistence() {
+    SETTINGS_FIELDS.forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const evt = (el.tagName === "SELECT") ? "change" : "input";
+      el.addEventListener(evt, saveSettings);
+    });
+  }
+
+  // ====== CORE ANALYSE ======
   function detectFlux(candles, depth) {
     if (candles.length <= depth) return "FLAT";
     const recent = candles[0].close;
@@ -823,13 +1004,14 @@
     });
   }
 
-  // Lightweight Charts
+  // Lightweight Charts – graphique FBO
   let lwChart = null;
   let candleSeries = null;
   let priceLines = [];
 
   function ensureLWChart() {
     if (lwChart) return;
+    if (typeof LightweightCharts === "undefined" || !LightweightCharts.createChart) return;
     const container = document.getElementById("fboChart");
     if (!container) return;
     lwChart = LightweightCharts.createChart(container, {
@@ -887,9 +1069,12 @@
   let eqSeries = null;
 
   function ensureEqChart() {
-    if (eqChart) return;
+    if (eqChart && eqSeries) return;
+    if (typeof LightweightCharts === "undefined" || !LightweightCharts.createChart) return;
+
     const container = document.getElementById("equityChart");
     if (!container) return;
+
     eqChart = LightweightCharts.createChart(container, {
       width: container.clientWidth,
       height: container.clientHeight,
@@ -898,10 +1083,22 @@
       timeScale: { borderColor: '#1f2937', visible: false },
       rightPriceScale: { borderColor: '#1f2937' }
     });
-    eqSeries = eqChart.addLineSeries();
-    window.addEventListener('resize', () => {
+
+    if (typeof eqChart.addLineSeries === "function") {
+      eqSeries = eqChart.addLineSeries();
+    } else if (typeof eqChart.addAreaSeries === "function") {
+      eqSeries = eqChart.addAreaSeries();
+    } else {
+      eqChart = null;
+      eqSeries = null;
+      return;
+    }
+
+    window.addEventListener("resize", () => {
       const rect = container.getBoundingClientRect();
-      eqChart.applyOptions({ width: rect.width, height: rect.height });
+      if (eqChart) {
+        eqChart.applyOptions({ width: rect.width, height: rect.height });
+      }
     });
   }
 
@@ -910,7 +1107,7 @@
     ensureEqChart();
     if (!eqChart || !eqSeries) return;
     const data = history.map((p, idx) => ({
-      time: idx,    // index simple, on s'en fiche du vrai temps ici
+      time: idx,
       value: p
     }));
     eqSeries.setData(data);
@@ -961,15 +1158,21 @@
       valuePerPointInp.value = "1";
       lookbackInput.value    = "40";
     }
+    saveSettings();
   });
 
   document.addEventListener("DOMContentLoaded", () => {
+    loadSettings();
+    setupSettingsPersistence();
+    const symEl = document.getElementById("symbol");
+    const initialSymbol = (symEl && symEl.value) ? symEl.value : "XAUUSD";
+
     if (typeof TradingView !== "undefined") {
-      renderTradingView(symbolToTV("XAUUSD"));
+      renderTradingView(symbolToTV(initialSymbol));
     } else {
       setTimeout(() => {
         if (typeof TradingView !== "undefined") {
-          renderTradingView(symbolToTV("XAUUSD"));
+          renderTradingView(symbolToTV(initialSymbol));
         }
       }, 1500);
     }
@@ -977,8 +1180,51 @@
   });
 
   let lastAnalysis = null;
-  let adaptiveStats = null; // mémoire du dernier backtest (IA adaptative light)
+  let adaptiveStats = null;
 
+  // ====== BOUTON RESET ======
+  document.getElementById("btnReset").addEventListener("click", () => {
+    // Remettre les valeurs par défaut
+    Object.keys(DEFAULTS).forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = DEFAULTS[id];
+    });
+    // Vider certains champs
+    const toClear = ["apiKey","equity","btInitialEquity","journalNotes","journalOutput"];
+    toClear.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = "";
+    });
+
+    // Décocher check-list
+    ["chkFlux","chkOBote","chkLiquidity","chkHTF","chkNews","chkSL"].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.checked = false;
+    });
+
+    // Cacher résultats & recap
+    document.getElementById("results").style.display = "none";
+    const recap = document.getElementById("recapCard");
+    if (recap) recap.style.display = "none";
+
+    // Effacer backtest
+    document.getElementById("btResults").textContent = "";
+    document.getElementById("btError").style.display = "none";
+    document.getElementById("equityWrapper").style.display = "none";
+
+    // Effacer erreurs
+    document.getElementById("error").style.display = "none";
+
+    // Effacer sauvegarde locale
+    try {
+      localStorage.removeItem(SETTINGS_KEY);
+    } catch (e) {}
+
+    lastAnalysis = null;
+    adaptiveStats = null;
+  });
+
+  // ====== SCAN PRINCIPAL ======
   document.getElementById("btnScan").addEventListener("click", async () => {
     const apiKey       = document.getElementById("apiKey").value.trim();
     const symbol       = document.getElementById("symbol").value.trim();
@@ -1005,11 +1251,15 @@
     const errorEl      = document.getElementById("error");
     const resultsEl    = document.getElementById("results");
     const explanationEl= document.getElementById("explanation");
+    const recapCard    = document.getElementById("recapCard");
 
     errorEl.style.display = "none";
     resultsEl.style.display = "none";
     explanationEl.textContent = "";
+    recapCard.style.display = "none";
     lastAnalysis = null;
+
+    saveSettings();
 
     try {
       if (!apiKey) throw new Error("Merci de coller ta clé API Twelve Data.");
@@ -1063,6 +1313,7 @@
 
       const currentPrice = workCandles[0].close;
 
+      // Cas : pas de swing
       if (!swing) {
         const summary = "Impossible de trouver un swing propre avec ce lookback. Aucun setup FBO proposé.";
         document.getElementById("summary").textContent   = summary;
@@ -1443,7 +1694,6 @@
         `9️⃣ Émotion : ${mood}. Le score final tient compte de ton état mental.\n\n` +
         `👉 Score final : ${score.toFixed(0)}/100. Gatekeeper : ${gateStatus}.`;
 
-      // IA adaptative : ajout du dernier backtest
       if (adaptiveStats && adaptiveStats.symbol === symbol.toUpperCase() && adaptiveStats.interval === interval) {
         explanationText +=
           `\n\n🔁 Info démo (IA adaptative) : sur le dernier backtest réalisé ici sur ${adaptiveStats.symbol} (${adaptiveStats.interval}), ` +
@@ -1469,12 +1719,39 @@
         equity
       };
 
+      // Mise à jour graphique maison
       updateLWChart(workCandles, { entry, sl, tp1, tp2, tp3 });
+
+      // Mise à jour TradingView
       if (typeof TradingView !== "undefined") renderTradingView(symbolToTV(symbol));
+
+      // Mise à jour carte récap
+      const recapDirEl = document.getElementById("recapDirection");
+      const recapSymEl = document.getElementById("recapSymbol");
+      const recapEntry = document.getElementById("recapEntry");
+      const recapSL    = document.getElementById("recapSL");
+      const recapTP1   = document.getElementById("recapTP1");
+      const recapLot   = document.getElementById("recapLot");
+      const recapTag   = document.getElementById("recapTag");
+
+      recapDirEl.textContent = direction === "LONG" ? "LONG" : "SHORT";
+      recapSymEl.textContent = symbol.toUpperCase();
+      recapEntry.textContent = fmt(entry);
+      recapSL.textContent    = fmt(sl);
+      recapTP1.textContent   = fmt(tp1);
+      recapLot.textContent   = lotSize.toFixed(2);
+
+      // Couleur direction
+      recapDirEl.style.color = (direction === "LONG" ? "#22c55e" : "#f97373");
+
+      recapTag.textContent = `Score : ${score.toFixed(0)}/100 – ${scoreLabel}`;
+      recapCard.style.display = "block";
+
     } catch (e) {
       errorEl.textContent = e.message || "Erreur pendant l’analyse.";
       errorEl.style.display = "block";
       lastAnalysis = null;
+      document.getElementById("recapCard").style.display = "none";
     }
   });
 
@@ -1552,6 +1829,8 @@
     btResultsEl.textContent = "";
     equityWrapper.style.display = "none";
 
+    saveSettings();
+
     try {
       if (!apiKey) throw new Error("Merci de coller ta clé API Twelve Data.");
       if (!symbol) throw new Error("Merci d’indiquer un symbole.");
@@ -1593,7 +1872,6 @@
 
         const { direction, entry, sl, tp1, tp2, tp3, riskPerUnit } = setup;
 
-        // simulate future path: candles indices offset-1..0 (plus récentes)
         let resultR = null;
         for (let j = offset - 1; j >= 0; j--) {
           const c = candles[j];
@@ -1655,7 +1933,6 @@
       const avgR    = sumR / trades;
       const equityChange = ((equity - startEquity) / startEquity) * 100;
 
-      // cartes visuelles
       btResultsEl.innerHTML =
         `<div class="bt-stats">
           <div class="bt-card">
@@ -1687,7 +1964,6 @@
 
       updateEquityChart(equityHistory);
 
-      // IA adaptative : on mémorise ces stats
       adaptiveStats = {
         symbol: symbol.toUpperCase(),
         interval,
@@ -1733,10 +2009,12 @@
     document.getElementById("journalNotes").value = "";
   });
 </script>
-  <script>
+
+<script>
+  // Enregistrement service worker pour mode "App" téléphone
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("sw.js").catch(console.error);
   }
-  </script>
+</script>
 </body>
 </html>
