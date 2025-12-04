@@ -1,0 +1,1742 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <title>Analyseur FBO – Coach de trading</title>
+  <link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#020617">
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #020617;
+      color: #e5e7eb;
+      display: flex;
+      justify-content: center;
+      align-items: stretch;
+      padding: 10px;
+    }
+    .shell {
+      width: 100%;
+      max-width: 1100px;
+      background: #020617;
+      border-radius: 16px;
+      border: 1px solid #1f2937;
+      box-shadow: 0 25px 70px rgba(0,0,0,0.8);
+      padding: 14px 16px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    h1 {
+      margin: 0;
+      font-size: 1.1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #38bdf8;
+    }
+    .subtitle {
+      font-size: 0.8rem;
+      color: #9ca3af;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 6px;
+      margin-top: 10px;
+      border-bottom: 1px solid #1f2937;
+      padding-bottom: 2px;
+    }
+    .tab-btn {
+      padding: 6px 10px;
+      border-radius: 999px 999px 0 0;
+      border: 1px solid transparent;
+      background: #020617;
+      color: #9ca3af;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      cursor: pointer;
+    }
+    .tab-btn.active {
+      background: #0f172a;
+      color: #e5e7eb;
+      border-color: #1f2937;
+      border-bottom-color: #0f172a;
+    }
+    .tab-pane {
+      display: none;
+      margin-top: 8px;
+    }
+    .tab-pane.active {
+      display: block;
+    }
+
+    .grid {
+      display: grid;
+      gap: 8px 12px;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      margin-top: 6px;
+    }
+    label {
+      font-size: 0.75rem;
+      color: #9ca3af;
+      display: block;
+      margin-bottom: 2px;
+    }
+    input, select {
+      width: 100%;
+      padding: 6px 8px;
+      border-radius: 8px;
+      border: 1px solid #1f2937;
+      background: #020617;
+      color: #e5e7eb;
+      font-size: 0.8rem;
+      outline: none;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: #38bdf8;
+      box-shadow: 0 0 0 1px rgba(56,189,248,0.4);
+    }
+    textarea {
+      width: 100%;
+      padding: 6px 8px;
+      border-radius: 8px;
+      border: 1px solid #1f2937;
+      background: #020617;
+      color: #e5e7eb;
+      font-size: 0.8rem;
+      outline: none;
+      resize: vertical;
+      min-height: 60px;
+    }
+    .btn-main {
+      border: none;
+      padding: 7px 14px;
+      border-radius: 999px;
+      background: linear-gradient(to right, #0ea5e9, #22c55e);
+      color: #020617;
+      font-size: 0.82rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+    .btn-main span { font-size: 1rem; }
+    .btn-secondary {
+      border: none;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #111827;
+      color: #e5e7eb;
+      font-size: 0.75rem;
+      cursor: pointer;
+      margin-top: 6px;
+    }
+
+    .results {
+      border-radius: 12px;
+      border: 1px solid #1f2937;
+      padding: 8px 9px;
+      background: #020617;
+      margin-top: 8px;
+    }
+    .section-title {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #9ca3af;
+      margin: 4px 0 2px;
+    }
+    .line {
+      height: 1px;
+      background: linear-gradient(to right, transparent, #1e293b, transparent);
+      margin: 2px 0 4px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.75rem;
+      margin-top: 4px;
+    }
+    th, td {
+      padding: 4px 3px;
+      border-bottom: 1px solid #0f172a;
+      text-align: right;
+    }
+    th:first-child, td:first-child { text-align: left; }
+    th {
+      color: #9ca3af;
+      font-weight: 500;
+    }
+    .small {
+      font-size: 0.75rem;
+      color: #9ca3af;
+    }
+    .error {
+      font-size: 0.78rem;
+      color: #f97373;
+      margin-top: 4px;
+    }
+    .score-bar {
+      margin-top: 4px;
+      width: 100%;
+      height: 6px;
+      border-radius: 999px;
+      background: #020617;
+      border: 1px solid #111827;
+      overflow: hidden;
+    }
+    .score-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 999px;
+      background: linear-gradient(to right, #f97316, #22c55e);
+      transition: width 0.2s ease-out;
+    }
+    .score-label {
+      font-size: 0.75rem;
+      display: flex;
+      justify-content: space-between;
+      margin-top: 2px;
+      color: #9ca3af;
+    }
+
+    .tv-card, .chart-card {
+      margin-top: 12px;
+      border-radius: 12px;
+      border: 1px solid #1f2937;
+      padding: 8px 9px;
+      background: #020617;
+    }
+    .tv-wrapper {
+      width: 100%;
+      height: 260px;
+    }
+    #tradingview_chart {
+      width: 100%;
+      height: 100%;
+    }
+    .chart-wrapper {
+      width: 100%;
+      height: 260px;
+    }
+    #fboChart {
+      width: 100%;
+      height: 100%;
+    }
+
+    .calendar-card {
+      margin-top: 8px;
+      border-radius: 12px;
+      border: 1px solid #1f2937;
+      background: #020617;
+      padding: 8px 9px;
+    }
+    .calendar-title {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #9ca3af;
+      margin-bottom: 4px;
+    }
+    .calendar-wrapper {
+      width: 100%;
+      height: 420px;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #020617;
+    }
+    .ecw-copyright a {
+      font-size: 0.7rem;
+      color: #6b7280;
+      text-decoration: none;
+    }
+
+    .gate-pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 600;
+    }
+
+    /* Cartes & courbe du backtest */
+    .bt-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 6px;
+      margin-top: 6px;
+    }
+    .bt-card {
+      border-radius: 10px;
+      border: 1px solid #1f2937;
+      background: radial-gradient(circle at top left, rgba(56,189,248,0.1), #020617);
+      padding: 6px 8px;
+    }
+    .bt-card-title {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #9ca3af;
+      margin-bottom: 2px;
+    }
+    .bt-card-value {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #e5e7eb;
+    }
+    .bt-card-sub {
+      font-size: 0.7rem;
+      color: #9ca3af;
+    }
+    .equity-chart-wrapper {
+      margin-top: 8px;
+      border-radius: 10px;
+      border: 1px solid #1f2937;
+      padding: 4px 4px 6px;
+      background: #020617;
+    }
+    #equityChart {
+      width: 100%;
+      height: 160px;
+    }
+  </style>
+</head>
+<body>
+<div class="shell">
+  <div>
+    <h1>Analyseur FBO – Coach de trading</h1>
+    <div class="subtitle">
+      Onglet 1 : analyse FBO semi-auto, graphique maison + vue TradingView, journal & démo.  
+      Onglet 2 : calendrier économique Tradays.  
+      Toi seul cliques sur BUY/SELL sur MT5.
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button id="tabAnalysisBtn" class="tab-btn active">Analyse FBO</button>
+    <button id="tabCalendarBtn" class="tab-btn">Calendrier éco</button>
+  </div>
+
+  <!-- Onglet 1 : Analyse -->
+  <div id="tab-analysis" class="tab-pane active">
+    <div class="grid">
+      <div>
+        <label>Clé API Twelve Data</label>
+        <input id="apiKey" type="text" placeholder="Colle ta clé ici" />
+      </div>
+      <div>
+        <label>Symbole</label>
+        <input id="symbol" type="text" value="XAUUSD" />
+      </div>
+      <div>
+        <label>Intervalle</label>
+        <select id="interval">
+          <option value="1h">H1 (1h)</option>
+          <option value="30min">M30 (30min)</option>
+          <option value="15min">M15 (15min)</option>
+        </select>
+      </div>
+      <div>
+        <label>Lookback swing (bougies)</label>
+        <input id="lookback" type="number" value="50" step="1" />
+      </div>
+      <div>
+        <label>Équité compte (live & démo)</label>
+        <input id="equity" type="number" step="0.01" />
+      </div>
+      <div>
+        <label>Risque par trade (%)</label>
+        <input id="riskPercent" type="number" step="0.01" value="0.17" />
+      </div>
+      <div>
+        <label>Valeur 1 point / 1 lot</label>
+        <input id="valuePerPoint" type="number" step="0.01" value="1" />
+      </div>
+      <div>
+        <label>R/R minimum visé</label>
+        <input id="minRR" type="number" step="0.5" value="2" />
+      </div>
+      <div>
+        <label>SL manuel (points/pips, optionnel)</label>
+        <input id="slOverride" type="number" step="0.1" placeholder="laisser vide pour SL auto" />
+      </div>
+      <div>
+        <label>Limite risque jour (%)</label>
+        <input id="dailyLimit" type="number" step="0.1" value="1" />
+      </div>
+      <div>
+        <label>Risque déjà utilisé aujourd’hui (%)</label>
+        <input id="dailyUsed" type="number" step="0.1" value="0" />
+      </div>
+      <div>
+        <label>Max trades perdants / jour</label>
+        <input id="maxLoses" type="number" step="1" value="2" />
+      </div>
+      <div>
+        <label>Trades perdants aujourd’hui</label>
+        <input id="losesToday" type="number" step="1" value="0" />
+      </div>
+      <div>
+        <label>Décalage replay (bougies passées)</label>
+        <input id="replayShift" type="number" step="1" value="0" />
+      </div>
+      <div>
+        <label>Seuil proximité entrée (pts)</label>
+        <input id="proximityThreshold" type="number" step="0.1" value="10" />
+      </div>
+      <div>
+        <label>Bias Weekly (manuel)</label>
+        <select id="biasWeekly">
+          <option value="none">Non défini</option>
+          <option value="bull">Bull</option>
+          <option value="bear">Bear</option>
+          <option value="range">Range</option>
+        </select>
+      </div>
+      <div>
+        <label>Bias Daily (manuel)</label>
+        <select id="biasDaily">
+          <option value="none">Non défini</option>
+          <option value="bull">Bull</option>
+          <option value="bear">Bear</option>
+          <option value="range">Range</option>
+        </select>
+      </div>
+      <div>
+        <label>Filtre killzones</label>
+        <select id="killzoneMode">
+          <option value="ignore">Ignorer</option>
+          <option value="soft">Soft (avertissement)</option>
+          <option value="strict">Strict (score réduit)</option>
+        </select>
+      </div>
+      <div>
+        <label>Profil rapide</label>
+        <select id="profileSelect">
+          <option value="none">Aucun</option>
+          <option value="xau">XAUUSD (or)</option>
+          <option value="btc">BTCUSD</option>
+          <option value="eur">EURUSD</option>
+        </select>
+      </div>
+      <div>
+        <label>État émotionnel</label>
+        <select id="moodSelect">
+          <option value="calm">Calme / neutre</option>
+          <option value="mild">Un peu stressé</option>
+          <option value="tilt">Énervé / tilt</option>
+          <option value="revenge">Revanche / FOMO</option>
+        </select>
+      </div>
+      <div>
+        <label>Type de setup</label>
+        <select id="setupType">
+          <option value="FBO">FBO standard</option>
+          <option value="continuation">Continuation</option>
+          <option value="reversal">Reversal</option>
+          <option value="liquidity-grab">Liquidity Grab</option>
+          <option value="range-break">Range Breakout</option>
+        </select>
+      </div>
+      <div>
+        <label>Décision (journal)</label>
+        <select id="decisionSelect">
+          <option value="non-defini">Non décidé</option>
+          <option value="pris">Trade pris</option>
+          <option value="non-pris">Trade non pris</option>
+          <option value="rate">Setup vu mais raté</option>
+        </select>
+      </div>
+    </div>
+
+    <button class="btn-main" id="btnScan">
+      <span>🤖</span> Scanner automatiquement
+    </button>
+
+    <div id="error" class="error" style="display:none;"></div>
+
+    <div class="results" id="results" style="display:none;">
+      <div class="section-title">Résumé</div>
+      <div class="line"></div>
+      <div id="summary" class="small"></div>
+
+      <div class="section-title">Structure FBO</div>
+      <div class="line"></div>
+      <table>
+        <tbody>
+        <tr><td>Flux</td><td id="fluxCell"></td><td>UP = LONG, DOWN = SHORT</td></tr>
+        <tr><td>Swing</td><td id="swingCell"></td><td>Zone impulsive récente</td></tr>
+        <tr><td>OTE</td><td id="oteCell"></td><td>Zone 61.8–79 %</td></tr>
+        <tr><td>OB</td><td id="obCell"></td><td id="obOteCell"></td></tr>
+        <tr><td>OB 25 %</td><td id="ob25Cell"></td><td>Niveau interne pour SL</td></tr>
+        <tr><td>Entrée</td><td id="entryCell"></td><td>Prix d’entrée FBO</td></tr>
+        <tr><td>Stop Loss</td><td id="slCell"></td><td id="slInfoCell"></td></tr>
+        <tr><td>TP1</td><td id="tp1Cell"></td><td>2R (BE + partiel)</td></tr>
+        <tr><td>TP2</td><td id="tp2Cell"></td><td>3R</td></tr>
+        <tr><td>TP3</td><td id="tp3Cell"></td><td>4R</td></tr>
+        <tr><td>Lot conseillé</td><td id="lotCell"></td><td id="lotInfoCell"></td></tr>
+        </tbody>
+      </table>
+
+      <div class="score-label">
+        <span id="scoreText">Score trade : -</span>
+        <span id="safetyText">Risque global : -</span>
+      </div>
+      <div class="score-bar">
+        <div class="score-fill" id="scoreFill"></div>
+      </div>
+
+      <div class="section-title">Contexte & risk</div>
+      <div class="line"></div>
+      <table>
+        <tbody>
+        <tr><td>HTF (Weekly/Daily)</td><td id="htfCell"></td><td>Biais déclarés vs trade</td></tr>
+        <tr><td>Killzone actuelle</td><td id="killzoneCell"></td><td>Heure locale & fenêtre</td></tr>
+        <tr><td>Limite de risque jour</td><td id="riskGuardCell"></td><td>Basé sur tes paramètres jour</td></tr>
+        <tr><td>Trades perdants jour</td><td id="lossesCell"></td><td>Respect de ton max pertes</td></tr>
+        <tr><td>Liquidité (EQH/EQL)</td><td id="liquidityCell"></td><td>Equal highs / equal lows récents</td></tr>
+        <tr><td>FVG / Imbalances</td><td id="fvgCell"></td><td>Contexte SMC basique</td></tr>
+        <tr><td>Proximité entrée</td><td id="proximityCell"></td><td>Distance prix actuel vs entrée</td></tr>
+        <tr><td>Feu de décision</td><td id="gateCell"></td><td>Feu vert / orange / rouge</td></tr>
+        </tbody>
+      </table>
+
+      <div class="section-title">Check-list FBO (manuel)</div>
+      <div class="line"></div>
+      <div class="small">
+        <label><input type="checkbox" id="chkFlux" /> Flux clair & aligné HTF</label><br/>
+        <label><input type="checkbox" id="chkOBote" /> OB propre + dans ta logique de structure</label><br/>
+        <label><input type="checkbox" id="chkLiquidity" /> Liquidité prise avant l'entrée</label><br/>
+        <label><input type="checkbox" id="chkHTF" /> Confluence Weekly / Daily respectée</label><br/>
+        <label><input type="checkbox" id="chkNews" /> Pas de news rouge imminente</label><br/>
+        <label><input type="checkbox" id="chkSL" /> SL conforme à tes règles FBO</label>
+      </div>
+
+      <div class="section-title">Explication de l'analyse</div>
+      <div class="line"></div>
+      <div id="explanation" class="small"></div>
+    </div>
+
+    <!-- Graphique maison FBO -->
+    <div class="chart-card">
+      <div class="section-title">Graphique FBO (bougies + niveaux)</div>
+      <div class="line"></div>
+      <div class="chart-wrapper">
+        <div id="fboChart"></div>
+      </div>
+      <div class="small" style="margin-top:4px;">
+        Bougies via Twelve Data. Lignes = Entrée, SL, TP1, TP2, TP3.  
+        C’est ce que tu reportes sur MT5.
+      </div>
+    </div>
+
+    <!-- Vue TradingView (optionnelle) -->
+    <div class="tv-card">
+      <div class="section-title">Vue TradingView</div>
+      <div class="line"></div>
+      <div class="tv-wrapper">
+        <div id="tradingview_chart"></div>
+      </div>
+      <div class="small" style="margin-top:4px;">
+        Graphique TradingView indépendant pour visualiser le price action avec tes layouts habituels.
+      </div>
+    </div>
+
+    <!-- Mode démo / Backtest -->
+    <div class="results">
+      <div class="section-title">Mode démo / Backtest FBO</div>
+      <div class="line"></div>
+      <div class="grid">
+        <div>
+          <label>Capital initial démo (si vide = équité)</label>
+          <input id="btInitialEquity" type="number" step="0.01" placeholder="ex : 1000" />
+        </div>
+        <div>
+          <label>Nombre max de trades testés</label>
+          <input id="btMaxTrades" type="number" step="1" value="30" />
+        </div>
+        <div>
+          <label>Max bougies en arrière</label>
+          <input id="btMaxOffset" type="number" step="1" value="150" />
+        </div>
+      </div>
+      <button type="button" class="btn-secondary" id="btnBacktest">
+        Lancer un backtest rapide (démo)
+      </button>
+      <div id="btError" class="error" style="display:none;"></div>
+      <div id="btResults" class="small" style="margin-top:4px;"></div>
+      <div class="equity-chart-wrapper" id="equityWrapper" style="display:none;">
+        <div class="small" style="margin-bottom:2px;">Courbe d’équité démo</div>
+        <div id="equityChart"></div>
+      </div>
+    </div>
+
+    <!-- Journal -->
+    <div class="results">
+      <div class="section-title">Journal & notes</div>
+      <div class="line"></div>
+      <div class="small">
+        Écris pourquoi tu prends (ou pas) ce trade, choisis “Décision” + “Type de setup”, puis ajoute une ligne.  
+        Tu peux copier/coller le bloc dans ton Google Sheet.
+      </div>
+      <label style="margin-top:4px;">Notes / raisons</label>
+      <textarea id="journalNotes" placeholder="Ex : respect du plan, contexte HTF, émotions, pourquoi oui/non..."></textarea>
+      <button type="button" class="btn-secondary" id="btnJournal">Ajouter au journal brut</button>
+      <label style="margin-top:6px;">Journal brut (copier/coller)</label>
+      <textarea id="journalOutput" readonly></textarea>
+    </div>
+  </div>
+
+  <!-- Onglet 2 : Calendrier -->
+  <div id="tab-calendar" class="tab-pane">
+    <div class="calendar-card">
+      <div class="calendar-title">Calendrier économique (Tradays / MQL5)</div>
+      <div class="calendar-wrapper">
+        <div id="economicCalendarWidget"></div>
+      </div>
+      <div class="ecw-copyright">
+        <a href="https://www.mql5.com/?utm_source=calendar.widget&utm_medium=link&utm_term=economic.calendar&utm_content=visit.mql5.calendar&utm_campaign=202.calendar.widget"
+           rel="noopener nofollow" target="_blank">
+          MQL5 Algo Trading Community
+        </a>
+      </div>
+      <div class="small" style="margin-top:4px;">
+        Utilise ce calendrier pour filtrer les news rouges avant de prendre un setup.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Calendrier Tradays -->
+<script async type="text/javascript"
+        data-type="calendar-widget"
+        src="https://www.tradays.com/c/js/widgets/calendar/widget.js?v=15">
+  {"width":"100%","height":"100%","mode":"1","fw":"html","lang":"en","theme":1}
+</script>
+
+<!-- TradingView widget -->
+<script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+
+<!-- Lightweight Charts pour le graphique maison -->
+<script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+
+<script>
+  function fmt(v) {
+    if (typeof v !== "number" || Number.isNaN(v)) return "-";
+    return v.toFixed(2);
+  }
+
+  function detectFlux(candles, depth) {
+    if (candles.length <= depth) return "FLAT";
+    const recent = candles[0].close;
+    const older  = candles[depth].close;
+    if (recent > older * 1.002) return "UP";
+    if (recent < older * 0.998) return "DOWN";
+    return "FLAT";
+  }
+
+  function findSwing(candles, flux, lookback) {
+    if (candles.length < lookback + 1) return null;
+    const segment = candles.slice(0, lookback);
+    let swingHigh = -Infinity;
+    let swingLow  = Infinity;
+    for (const c of segment) {
+      if (c.high > swingHigh) swingHigh = c.high;
+      if (c.low  < swingLow)  swingLow  = c.low;
+    }
+    if (swingHigh <= swingLow) return null;
+    return { swingHigh, swingLow };
+  }
+
+  function computeOTE(swingLow, swingHigh, flux) {
+    let oteMin, oteMax;
+    if (flux === "UP") {
+      const l618 = swingLow + (swingHigh - swingLow) * 0.618;
+      const l79  = swingLow + (swingHigh - swingLow) * 0.79;
+      oteMin = Math.min(l618, l79);
+      oteMax = Math.max(l618, l79);
+    } else {
+      const l618 = swingHigh + (swingLow - swingHigh) * 0.618;
+      const l79  = swingHigh + (swingLow - swingHigh) * 0.79;
+      oteMin = Math.min(l618, l79);
+      oteMax = Math.max(l618, l79);
+    }
+    return { oteMin, oteMax };
+  }
+
+  function findOrderBlock(candles, flux) {
+    const segment = candles.slice(0, 15);
+    let obCandle = null;
+    if (flux === "UP") {
+      for (const c of segment) if (c.close < c.open) obCandle = c;
+    } else if (flux === "DOWN") {
+      for (const c of segment) if (c.close > c.open) obCandle = c;
+    }
+    if (!obCandle) return null;
+    return {
+      direction: flux === "UP" ? "LONG" : "SHORT",
+      high: obCandle.high,
+      low:  obCandle.low,
+      time: obCandle.time
+    };
+  }
+
+  function detectLiquidityZones(candles) {
+    const maxLook = Math.min(30, candles.length);
+    const highs = [], lows = [];
+    for (let i = 0; i < maxLook; i++) {
+      highs.push(candles[i].high);
+      lows.push(candles[i].low);
+    }
+    highs.sort((a,b) => b - a);
+    lows.sort((a,b)  => a - b);
+
+    let liqAbove = false, liqBelow = false;
+    let levelAbove = null, levelBelow = null;
+    const tol = 0.001;
+
+    if (highs.length >= 2) {
+      const m = (highs[0] + highs[1]) / 2;
+      if (Math.abs(highs[0] - highs[1]) <= m * tol) {
+        liqAbove = true;
+        levelAbove = m;
+      }
+    }
+    if (lows.length >= 2) {
+      const m = (lows[0] + lows[1]) / 2;
+      if (Math.abs(lows[0] - lows[1]) <= m * tol) {
+        liqBelow = true;
+        levelBelow = m;
+      }
+    }
+    return { liqAbove, liqBelow, levelAbove, levelBelow };
+  }
+
+  function detectFVG(candles) {
+    const asc = [...candles].reverse();
+    const len = asc.length;
+    const maxCheck = Math.min(30, len - 1);
+    let bullishLevel = null;
+    let bearishLevel = null;
+
+    for (let i = len - maxCheck + 1; i < len; i++) {
+      const prev = asc[i - 1];
+      const cur  = asc[i];
+      if (!prev || !cur) continue;
+      if (cur.low > prev.high) bullishLevel = (cur.low + prev.high) / 2;
+      if (cur.high < prev.low) bearishLevel = (cur.high + prev.low) / 2;
+    }
+    return { bullishLevel, bearishLevel };
+  }
+
+  function detectKillzoneInfo() {
+    const now = new Date();
+    const h = now.getHours() + now.getMinutes() / 60;
+    let zone = "Hors killzones";
+    if (h >= 8 && h < 11) zone = "Londres";
+    else if (h >= 14.5 && h < 17) zone = "New York AM";
+    else if (h >= 19 && h < 22) zone = "New York PM";
+    else if (h >= 1 && h < 4) zone = "Asie";
+    const timeStr = now.toTimeString().slice(0,5);
+    return { zone, timeStr };
+  }
+
+  async function fetchCandlesTwelve(apiKey, symbol, interval) {
+    let tdSymbol = symbol.toUpperCase().trim();
+    if (tdSymbol.length === 6 && tdSymbol.endsWith("USD")) {
+      const base = tdSymbol.slice(0, 3);
+      const quote = tdSymbol.slice(3, 6);
+      tdSymbol = base + "/" + quote;
+    }
+
+    const url =
+      "https://api.twelvedata.com/time_series?" +
+      "symbol=" + encodeURIComponent(tdSymbol) +
+      "&interval=" + encodeURIComponent(interval) +
+      "&outputsize=200" +
+      "&apikey=" + encodeURIComponent(apiKey);
+
+    const resp = await fetch(url);
+    const data = await resp.json();
+
+    if (!resp.ok || data.status === "error") {
+      throw new Error((data && (data.message || data.status)) || "Erreur API Twelve Data.");
+    }
+    if (!data.values || !Array.isArray(data.values)) {
+      throw new Error("Réponse API invalide (pas de 'values').");
+    }
+
+    const candles = data.values.map(v => ({
+      time:  new Date(v.datetime),
+      open:  parseFloat(v.open),
+      high:  parseFloat(v.high),
+      low:   parseFloat(v.low),
+      close: parseFloat(v.close)
+    })).filter(c =>
+      Number.isFinite(c.open) &&
+      Number.isFinite(c.high) &&
+      Number.isFinite(c.low) &&
+      Number.isFinite(c.close)
+    );
+
+    candles.sort((a,b) => b.time - a.time);
+    return candles;
+  }
+
+  function symbolToTV(symbol) {
+    const s = symbol.toUpperCase().trim();
+    if (s === "BTCUSD") return "BITSTAMP:BTCUSD";
+    if (s.length === 6 && s.endsWith("USD") && s !== "BTCUSD") {
+      return "OANDA:" + s;
+    }
+    if (s === "AAPL") return "NASDAQ:AAPL";
+    return s;
+  }
+
+  let tvWidget = null;
+  function renderTradingView(tvSymbol) {
+    if (typeof TradingView === "undefined") return;
+    const container = document.getElementById("tradingview_chart");
+    if (!container) return;
+    container.innerHTML = "";
+    tvWidget = new TradingView.widget({
+      width: "100%",
+      height: 260,
+      symbol: tvSymbol,
+      interval: "60",
+      timezone: "Etc/UTC",
+      theme: "dark",
+      style: "1",
+      locale: "fr",
+      hide_top_toolbar: false,
+      save_image: false,
+      container_id: "tradingview_chart"
+    });
+  }
+
+  // Lightweight Charts
+  let lwChart = null;
+  let candleSeries = null;
+  let priceLines = [];
+
+  function ensureLWChart() {
+    if (lwChart) return;
+    const container = document.getElementById("fboChart");
+    if (!container) return;
+    lwChart = LightweightCharts.createChart(container, {
+      width: container.clientWidth,
+      height: container.clientHeight,
+      layout: { background: { color: '#020617' }, textColor: '#e5e7eb' },
+      grid: { vertLines: { color: '#111827' }, horzLines: { color: '#111827' } },
+      timeScale: { borderColor: '#1f2937' },
+      rightPriceScale: { borderColor: '#1f2937' }
+    });
+    candleSeries = lwChart.addCandlestickSeries();
+    window.addEventListener('resize', () => {
+      const rect = container.getBoundingClientRect();
+      lwChart.applyOptions({ width: rect.width, height: rect.height });
+    });
+  }
+
+  function updateLWChart(candles, levels) {
+    ensureLWChart();
+    if (!lwChart || !candleSeries) return;
+
+    const data = [...candles].reverse().map(c => ({
+      time: Math.floor(c.time.getTime() / 1000),
+      open: c.open,
+      high: c.high,
+      low:  c.low,
+      close:c.close
+    }));
+    candleSeries.setData(data);
+
+    priceLines.forEach(pl => candleSeries.removePriceLine(pl));
+    priceLines = [];
+
+    function addLine(price, title) {
+      if (!Number.isFinite(price)) return;
+      const pl = candleSeries.createPriceLine({
+        price,
+        lineWidth: 2,
+        lineStyle: 2,
+        axisLabelVisible: true,
+        title
+      });
+      priceLines.push(pl);
+    }
+
+    addLine(levels.entry, "ENTRY");
+    addLine(levels.sl, "SL");
+    addLine(levels.tp1, "TP1");
+    addLine(levels.tp2, "TP2");
+    addLine(levels.tp3, "TP3");
+  }
+
+  // Graphique d'équité (backtest)
+  let eqChart = null;
+  let eqSeries = null;
+
+  function ensureEqChart() {
+    if (eqChart) return;
+    const container = document.getElementById("equityChart");
+    if (!container) return;
+    eqChart = LightweightCharts.createChart(container, {
+      width: container.clientWidth,
+      height: container.clientHeight,
+      layout: { background: { color: '#020617' }, textColor: '#e5e7eb' },
+      grid: { vertLines: { color: '#111827' }, horzLines: { color: '#111827' } },
+      timeScale: { borderColor: '#1f2937', visible: false },
+      rightPriceScale: { borderColor: '#1f2937' }
+    });
+    eqSeries = eqChart.addLineSeries();
+    window.addEventListener('resize', () => {
+      const rect = container.getBoundingClientRect();
+      eqChart.applyOptions({ width: rect.width, height: rect.height });
+    });
+  }
+
+  function updateEquityChart(history) {
+    if (!history || history.length === 0) return;
+    ensureEqChart();
+    if (!eqChart || !eqSeries) return;
+    const data = history.map((p, idx) => ({
+      time: idx,    // index simple, on s'en fiche du vrai temps ici
+      value: p
+    }));
+    eqSeries.setData(data);
+    document.getElementById("equityWrapper").style.display = "block";
+  }
+
+  // Onglets
+  const tabAnalysisBtn   = document.getElementById("tabAnalysisBtn");
+  const tabCalendarBtn   = document.getElementById("tabCalendarBtn");
+  const tabAnalysisPane  = document.getElementById("tab-analysis");
+  const tabCalendarPane  = document.getElementById("tab-calendar");
+
+  tabAnalysisBtn.addEventListener("click", () => {
+    tabAnalysisBtn.classList.add("active");
+    tabCalendarBtn.classList.remove("active");
+    tabAnalysisPane.classList.add("active");
+    tabCalendarPane.classList.remove("active");
+  });
+
+  tabCalendarBtn.addEventListener("click", () => {
+    tabCalendarBtn.classList.add("active");
+    tabAnalysisBtn.classList.remove("active");
+    tabCalendarPane.classList.add("active");
+    tabAnalysisPane.classList.remove("active");
+  });
+
+  // Profils rapides
+  document.getElementById("profileSelect").addEventListener("change", (e) => {
+    const v = e.target.value;
+    const symbolInput      = document.getElementById("symbol");
+    const intervalSel      = document.getElementById("interval");
+    const valuePerPointInp = document.getElementById("valuePerPoint");
+    const lookbackInput    = document.getElementById("lookback");
+
+    if (v === "xau") {
+      symbolInput.value      = "XAUUSD";
+      intervalSel.value      = "1h";
+      valuePerPointInp.value = "1";
+      lookbackInput.value    = "50";
+    } else if (v === "btc") {
+      symbolInput.value      = "BTCUSD";
+      intervalSel.value      = "1h";
+      valuePerPointInp.value = "1";
+      lookbackInput.value    = "60";
+    } else if (v === "eur") {
+      symbolInput.value      = "EURUSD";
+      intervalSel.value      = "15min";
+      valuePerPointInp.value = "1";
+      lookbackInput.value    = "40";
+    }
+  });
+
+  document.addEventListener("DOMContentLoaded", () => {
+    if (typeof TradingView !== "undefined") {
+      renderTradingView(symbolToTV("XAUUSD"));
+    } else {
+      setTimeout(() => {
+        if (typeof TradingView !== "undefined") {
+          renderTradingView(symbolToTV("XAUUSD"));
+        }
+      }, 1500);
+    }
+    ensureLWChart();
+  });
+
+  let lastAnalysis = null;
+  let adaptiveStats = null; // mémoire du dernier backtest (IA adaptative light)
+
+  document.getElementById("btnScan").addEventListener("click", async () => {
+    const apiKey       = document.getElementById("apiKey").value.trim();
+    const symbol       = document.getElementById("symbol").value.trim();
+    const interval     = document.getElementById("interval").value;
+    const lookback     = parseInt(document.getElementById("lookback").value || "50", 10);
+    const equity       = parseFloat(document.getElementById("equity").value);
+    const riskPercent  = parseFloat(document.getElementById("riskPercent").value);
+    const valuePerPoint= parseFloat(document.getElementById("valuePerPoint").value);
+    const minRR        = parseFloat(document.getElementById("minRR").value || "2");
+    const slOverride   = parseFloat(document.getElementById("slOverride").value);
+
+    const dailyLimit   = parseFloat(document.getElementById("dailyLimit").value || "0");
+    const dailyUsed    = parseFloat(document.getElementById("dailyUsed").value || "0");
+    const maxLoses     = parseInt(document.getElementById("maxLoses").value || "0", 10);
+    const losesToday   = parseInt(document.getElementById("losesToday").value || "0", 10);
+    const replayShift  = parseInt(document.getElementById("replayShift").value || "0", 10);
+    const proximityThreshold = parseFloat(document.getElementById("proximityThreshold").value || "0");
+
+    const biasWeekly   = document.getElementById("biasWeekly").value;
+    const biasDaily    = document.getElementById("biasDaily").value;
+    const killzoneMode = document.getElementById("killzoneMode").value;
+    const mood         = document.getElementById("moodSelect").value;
+
+    const errorEl      = document.getElementById("error");
+    const resultsEl    = document.getElementById("results");
+    const explanationEl= document.getElementById("explanation");
+
+    errorEl.style.display = "none";
+    resultsEl.style.display = "none";
+    explanationEl.textContent = "";
+    lastAnalysis = null;
+
+    try {
+      if (!apiKey) throw new Error("Merci de coller ta clé API Twelve Data.");
+      if (!symbol) throw new Error("Merci d’indiquer un symbole (XAUUSD, BTCUSD, EURUSD...).");
+      if (!Number.isFinite(equity) || !Number.isFinite(riskPercent) || !Number.isFinite(valuePerPoint) ||
+          equity <= 0 || riskPercent <= 0 || valuePerPoint <= 0) {
+        throw new Error("Merci de remplir équité, risque % et valeur 1 point.");
+      }
+
+      const candles = await fetchCandlesTwelve(apiKey, symbol, interval);
+      if (candles.length < 20) throw new Error("Pas assez de bougies pour analyser (moins de 20).");
+
+      const offset = Math.max(0, replayShift);
+      if (candles.length - offset < 20) {
+        throw new Error("Pas assez de bougies pour analyser avec ce décalage (replay).");
+      }
+      const workCandles = candles.slice(offset);
+
+      const flux = detectFlux(workCandles, 10);
+      const fluxTxt =
+        flux === "UP" ? "Flux haussier (LONG)" :
+        flux === "DOWN" ? "Flux baissier (SHORT)" :
+        "Flux neutre / indéterminé";
+
+      const swing = findSwing(workCandles, flux, Math.min(lookback, workCandles.length - 5));
+      let swingHigh, swingLow, oteMin, oteMax, ob, obRange, obInOte, ob25, buffer;
+      let entry, sl, slInfo, riskPerUnit, tp1, tp2, tp3, rrMin;
+      let direction, riskAmount, lotRaw, lotSize, score, scoreLabel, summary, explanationText;
+
+      const htfCell       = document.getElementById("htfCell");
+      const killzoneCell  = document.getElementById("killzoneCell");
+      const riskGuardCell = document.getElementById("riskGuardCell");
+      const lossesCell    = document.getElementById("lossesCell");
+      const liquidityCell = document.getElementById("liquidityCell");
+      const fvgCell       = document.getElementById("fvgCell");
+      const proximityCell = document.getElementById("proximityCell");
+      const gateCell      = document.getElementById("gateCell");
+
+      htfCell.textContent       = "-";
+      killzoneCell.textContent  = "-";
+      riskGuardCell.textContent = "-";
+      lossesCell.textContent    = "-";
+      liquidityCell.textContent = "-";
+      fvgCell.textContent       = "-";
+      proximityCell.textContent = "-";
+      gateCell.textContent      = "";
+
+      const liq = detectLiquidityZones(workCandles);
+      const fvg = detectFVG(workCandles);
+      const { zone: killzone, timeStr } = detectKillzoneInfo();
+
+      const currentPrice = workCandles[0].close;
+
+      if (!swing) {
+        const summary = "Impossible de trouver un swing propre avec ce lookback. Aucun setup FBO proposé.";
+        document.getElementById("summary").textContent   = summary;
+        document.getElementById("fluxCell").textContent  = fluxTxt;
+        document.getElementById("swingCell").textContent = "-";
+        document.getElementById("oteCell").textContent   = "-";
+        document.getElementById("obCell").textContent    = "-";
+        document.getElementById("obOteCell").textContent = "";
+        document.getElementById("ob25Cell").textContent  = "-";
+        document.getElementById("entryCell").textContent = "-";
+        document.getElementById("slCell").textContent    = "-";
+        document.getElementById("tp1Cell").textContent   = "-";
+        document.getElementById("tp2Cell").textContent   = "-";
+        document.getElementById("tp3Cell").textContent   = "-";
+        document.getElementById("slInfoCell").textContent= "";
+        document.getElementById("lotCell").textContent   = "-";
+        document.getElementById("lotInfoCell").textContent = "-";
+        document.getElementById("scoreFill").style.width = "0%";
+        document.getElementById("scoreText").textContent = "Score trade : 0 / 100";
+        document.getElementById("safetyText").textContent = "Pas de setup FBO valide.";
+
+        htfCell.textContent       = "Non applicable (pas de setup).";
+        killzoneCell.textContent  = `Killzone actuelle : ${killzone} (${timeStr}).`;
+        riskGuardCell.textContent = "Non applicable (pas de trade proposé).";
+        lossesCell.textContent    = `Trades perdants aujourd’hui : ${losesToday}/${maxLoses}.`;
+        liquidityCell.textContent = "Non applicable (pas de setup).";
+        fvgCell.textContent       = "Non applicable (pas de setup).";
+        proximityCell.textContent = "Non applicable (pas de setup).";
+        gateCell.innerHTML        = `<span class="gate-pill" style="background:#111827;">LOCK : pas de setup</span>`;
+
+        explanationEl.textContent =
+          "Le bot n’a pas trouvé de swing clair (impulsion récente) sur ce lookback. " +
+          "Pour respecter la logique FBO, il préfère ne proposer aucun trade plutôt que de forcer un setup.";
+
+        resultsEl.style.display = "block";
+        ensureLWChart();
+        if (typeof TradingView !== "undefined") renderTradingView(symbolToTV(symbol));
+        return;
+      }
+
+      swingHigh = swing.swingHigh;
+      swingLow  = swing.swingLow;
+
+      const ote = computeOTE(swingLow, swingHigh, flux);
+      oteMin = ote.oteMin;
+      oteMax = ote.oteMax;
+
+      if (flux === "FLAT") {
+        const summary =
+          "Flux neutre sur " + symbol.toUpperCase() +
+          " : swing détecté [" + fmt(swingLow) + " – " + fmt(swingHigh) + "], " +
+          "mais pas assez d’impulsion pour un flux directionnel. Pas de setup FBO.";
+        document.getElementById("summary").textContent   = summary;
+        document.getElementById("fluxCell").textContent  = fluxTxt;
+        document.getElementById("swingCell").textContent = "[" + fmt(swingLow) + " – " + fmt(swingHigh) + "]";
+        document.getElementById("oteCell").textContent   = fmt(oteMin) + " – " + fmt(oteMax);
+        document.getElementById("obCell").textContent    = "-";
+        document.getElementById("obOteCell").textContent = "";
+        document.getElementById("ob25Cell").textContent  = "-";
+        document.getElementById("entryCell").textContent = "-";
+        document.getElementById("slCell").textContent    = "-";
+        document.getElementById("tp1Cell").textContent   = "-";
+        document.getElementById("tp2Cell").textContent   = "-";
+        document.getElementById("tp3Cell").textContent   = "-";
+        document.getElementById("slInfoCell").textContent= "";
+        document.getElementById("lotCell").textContent   = "-";
+        document.getElementById("lotInfoCell").textContent = "-";
+        document.getElementById("scoreFill").style.width = "0%";
+        document.getElementById("scoreText").textContent = "Score trade : 0 / 100";
+        document.getElementById("safetyText").textContent = "Pas de setup : flux neutre.";
+
+        htfCell.textContent       = "Non applicable (flux neutre).";
+        killzoneCell.textContent  = `Killzone actuelle : ${killzone} (${timeStr}).`;
+        riskGuardCell.textContent = "Non applicable (pas de trade proposé).";
+        lossesCell.textContent    = `Trades perdants aujourd’hui : ${losesToday}/${maxLoses}.`;
+        liquidityCell.textContent = "Non applicable (pas de setup).";
+        fvgCell.textContent       = "Non applicable (pas de setup).";
+        proximityCell.textContent = "Non applicable (pas de setup).";
+        gateCell.innerHTML        = `<span class="gate-pill" style="background:#111827;">LOCK : flux neutre</span>`;
+
+        explanationEl.textContent =
+          "Le flux est neutre. Dans ton plan FBO, on veut une vraie impulsion avant de chercher un pullback en OTE. " +
+          "Le bot préfère s’abstenir ici.";
+        resultsEl.style.display = "block";
+        ensureLWChart();
+        if (typeof TradingView !== "undefined") renderTradingView(symbolToTV(symbol));
+        return;
+      }
+
+      ob = findOrderBlock(workCandles, flux);
+      if (!ob) {
+        const summary =
+          "Flux : " + fluxTxt + ". Swing + OTE trouvés, mais aucun OB propre. Pas de setup FBO.";
+        document.getElementById("summary").textContent   = summary;
+        document.getElementById("fluxCell").textContent  = fluxTxt;
+        document.getElementById("swingCell").textContent = "[" + fmt(swingLow) + " – " + fmt(swingHigh) + "]";
+        document.getElementById("oteCell").textContent   = fmt(oteMin) + " – " + fmt(oteMax);
+        document.getElementById("obCell").textContent    = "-";
+        document.getElementById("obOteCell").textContent = "";
+        document.getElementById("ob25Cell").textContent  = "-";
+        document.getElementById("entryCell").textContent = "-";
+        document.getElementById("slCell").textContent    = "-";
+        document.getElementById("tp1Cell").textContent   = "-";
+        document.getElementById("tp2Cell").textContent   = "-";
+        document.getElementById("tp3Cell").textContent   = "-";
+        document.getElementById("slInfoCell").textContent= "";
+        document.getElementById("lotCell").textContent   = "-";
+        document.getElementById("lotInfoCell").textContent = "-";
+        document.getElementById("scoreFill").style.width = "0%";
+        document.getElementById("scoreText").textContent = "Score trade : 0 / 100";
+        document.getElementById("safetyText").textContent = "Pas de setup : OB introuvable.";
+
+        htfCell.textContent       = "Non applicable (pas de setup complet).";
+        killzoneCell.textContent  = `Killzone actuelle : ${killzone} (${timeStr}).`;
+        riskGuardCell.textContent = "Non applicable (pas de trade proposé).";
+        lossesCell.textContent    = `Trades perdants aujourd’hui : ${losesToday}/${maxLoses}.`;
+        liquidityCell.textContent = "Non applicable (pas de setup).";
+        fvgCell.textContent       = "Non applicable (pas de setup).";
+        proximityCell.textContent = "Non applicable (pas de setup).";
+        gateCell.innerHTML        = `<span class="gate-pill" style="background:#111827;">LOCK : OB absent</span>`;
+
+        explanationEl.textContent =
+          "Il manque un OB propre pour ancrer l’entrée. La structure FBO serait incomplète, donc mieux vaut passer.";
+        resultsEl.style.display = "block";
+        ensureLWChart();
+        if (typeof TradingView !== "undefined") renderTradingView(symbolToTV(symbol));
+        return;
+      }
+
+      obRange = ob.high - ob.low;
+      if (obRange <= 0) throw new Error("OB invalide (range ≤ 0).");
+
+      direction = ob.direction;
+      obInOte   = !(ob.high < oteMin || ob.low > oteMax);
+      ob25      = direction === "LONG"
+        ? ob.low + obRange * 0.25
+        : ob.high - obRange * 0.25;
+
+      buffer = obRange * 0.05;
+      entry  = direction === "LONG"
+        ? Math.min(ob.high, oteMax)
+        : Math.max(ob.low,  oteMin);
+
+      if (direction === "LONG") {
+        sl = ob25 - buffer;
+        if (sl >= entry) throw new Error("SL ≥ entrée en LONG.");
+        slInfo = "SL sous les 25 % internes de l’OB (buffer 5 %).";
+      } else {
+        sl = ob25 + buffer;
+        if (sl <= entry) throw new Error("SL ≤ entrée en SHORT.");
+        slInfo = "SL au-dessus des 25 % internes de l’OB (buffer 5 %).";
+      }
+
+      if (!Number.isNaN(slOverride) && slOverride > 0) {
+        if (direction === "LONG") sl = entry - slOverride;
+        else sl = entry + slOverride;
+        slInfo = "SL manuel : " + slOverride.toFixed(2) + " points/pips depuis l’entrée.";
+      }
+
+      riskPerUnit = Math.abs(entry - sl);
+      if (riskPerUnit <= 0) throw new Error("Distance Entry–SL nulle.");
+
+      if (direction === "LONG") {
+        tp1 = entry + 2 * riskPerUnit;
+        tp2 = entry + 3 * riskPerUnit;
+        tp3 = entry + 4 * riskPerUnit;
+      } else {
+        tp1 = entry - 2 * riskPerUnit;
+        tp2 = entry - 3 * riskPerUnit;
+        tp3 = entry - 4 * riskPerUnit;
+      }
+
+      rrMin = Math.abs(tp1 - entry) / riskPerUnit;
+
+      riskAmount = equity * (riskPercent / 100);
+      lotRaw     = riskAmount / (riskPerUnit * valuePerPoint);
+      lotSize    = Math.max(0, Math.round(lotRaw * 100) / 100);
+
+      // score technique
+      score = 0;
+      if (obInOte) score += 40;
+      if (rrMin >= minRR) score += 30;
+      if (rrMin >= 3) score += 10;
+      if (obRange > riskPerUnit * 1.5) score += 10;
+      score += 10;
+
+      // HTF
+      let htfAlignTxt = "Biais HTF non définis.";
+      let htfPenalty = 0, htfBonus = 0;
+      const tradeSide = direction === "LONG" ? "bull" : "bear";
+
+      function biasToTxt(b) {
+        if (b === "bull") return "Bull";
+        if (b === "bear") return "Bear";
+        if (b === "range") return "Range";
+        return "Non défini";
+      }
+
+      if (biasWeekly !== "none" || biasDaily !== "none") {
+        const parts = [];
+        parts.push("Weekly : " + biasToTxt(biasWeekly));
+        parts.push("Daily : "  + biasToTxt(biasDaily));
+        parts.push("Trade : "  + (direction === "LONG" ? "LONG (bull)" : "SHORT (bear)"));
+        if (biasWeekly === tradeSide) htfBonus += 5;
+        if (biasDaily === tradeSide)  htfBonus += 5;
+        if (biasWeekly === "bull" && tradeSide === "bear") htfPenalty += 10;
+        if (biasWeekly === "bear" && tradeSide === "bull") htfPenalty += 10;
+        if (biasDaily === "bull" && tradeSide === "bear")  htfPenalty += 5;
+        if (biasDaily === "bear" && tradeSide === "bull")  htfPenalty += 5;
+        htfAlignTxt = parts.join(" | ");
+      }
+
+      score += htfBonus - htfPenalty;
+
+      // killzones
+      let killTxt = `Killzone actuelle : ${killzone} (${timeStr}).`;
+      if (killzoneMode !== "ignore") {
+        if (killzone === "Hors killzones") {
+          if (killzoneMode === "soft") {
+            killTxt += " Hors de tes fenêtres privilégiées (soft).";
+            score -= 10;
+          } else {
+            killTxt += " Hors de tes fenêtres (strict).";
+            score -= 25;
+          }
+        } else {
+          killTxt += " Dans une fenêtre active : petit bonus.";
+          score += 5;
+        }
+      }
+
+      // risk guard jour
+      const projectedDaily = dailyLimit > 0 ? (dailyUsed + riskPercent) : null;
+      let riskGuardTxt = "";
+      if (dailyLimit > 0 && projectedDaily !== null) {
+        if (projectedDaily > dailyLimit + 1e-9) {
+          riskGuardTxt +=
+            `⚠ Avec ce trade tu dépasserais ta limite jour (${projectedDaily.toFixed(2)} % / ${dailyLimit.toFixed(2)} %). `;
+          score -= 20;
+        } else {
+          riskGuardTxt +=
+            `OK vs limite jour : ${projectedDaily.toFixed(2)} % / ${dailyLimit.toFixed(2)} %. `;
+        }
+      }
+      if (maxLoses > 0) {
+        if (losesToday >= maxLoses) {
+          riskGuardTxt += `⚠ Trades perdants max atteints (${losesToday}/${maxLoses}).`;
+          score -= 20;
+        } else {
+          riskGuardTxt += `Trades perdants aujourd’hui : ${losesToday}/${maxLoses}.`;
+        }
+      }
+
+      // liquidité / fvg
+      let liqTxt;
+      if (!liq.liqAbove && !liq.liqBelow) {
+        liqTxt = "Pas de equal highs / equal lows évidents.";
+      } else {
+        const parts = [];
+        if (liq.liqAbove) parts.push(`EQH ≈ ${fmt(liq.levelAbove)}`);
+        if (liq.liqBelow) parts.push(`EQL ≈ ${fmt(liq.levelBelow)}`);
+        liqTxt = parts.join(" | ");
+      }
+
+      let fvgTxt = "Aucun FVG clair proche.";
+      if (fvg.bullishLevel !== null || fvg.bearishLevel !== null) {
+        const fp = [];
+        if (fvg.bullishLevel !== null) {
+          fp.push(`FVG haussier ≈ ${fmt(fvg.bullishLevel)}`);
+        }
+        if (fvg.bearishLevel !== null) {
+          fp.push(`FVG baissier ≈ ${fmt(fvg.bearishLevel)}`);
+        }
+        fvgTxt = fp.join(" | ");
+      }
+
+      // proximité entrée
+      let proximityTxt = "Seuil de proximité non défini.";
+      if (!Number.isNaN(proximityThreshold) && proximityThreshold > 0) {
+        const dist = Math.abs(currentPrice - entry);
+        if (dist <= proximityThreshold) {
+          proximityTxt =
+            `Prix actuel très proche de l’entrée (≈ ${fmt(dist)} pts, seuil ${fmt(proximityThreshold)}).`;
+        } else {
+          proximityTxt =
+            `Prix encore éloigné de l’entrée (≈ ${fmt(dist)} pts).`;
+        }
+      }
+
+      // check-list
+      let checklistBonus = 0;
+      if (document.getElementById("chkFlux").checked)      checklistBonus += 5;
+      if (document.getElementById("chkOBote").checked)     checklistBonus += 5;
+      if (document.getElementById("chkLiquidity").checked) checklistBonus += 5;
+      if (document.getElementById("chkHTF").checked)       checklistBonus += 5;
+      if (document.getElementById("chkNews").checked)      checklistBonus += 5;
+      if (document.getElementById("chkSL").checked)        checklistBonus += 5;
+      score += checklistBonus;
+
+      // mood
+      if (mood === "mild") score -= 3;
+      if (mood === "tilt") score -= 10;
+      if (mood === "revenge") score -= 15;
+
+      if (score < 0) score = 0;
+      if (score > 100) score = 100;
+
+      if (score >= 80)      scoreLabel = "Setup A – premium si news & mental OK.";
+      else if (score >= 60) scoreLabel = "Setup B – correct si tu es frais.";
+      else if (score >= 40) scoreLabel = "Setup C – moyen, plutôt à éviter.";
+      else                  scoreLabel = "Setup D – faible, tu laisses passer.";
+
+      summary =
+        "FBO " + direction + " sur " + symbol.toUpperCase() + " : " +
+        "swing [" + fmt(swingLow) + " – " + fmt(swingHigh) + "], " +
+        "OTE [" + fmt(oteMin) + " – " + fmt(oteMax) + "], OB [" + fmt(ob.low) + " – " + fmt(ob.high) + "], " +
+        "Entrée " + fmt(entry) + ", SL " + fmt(sl) + ", TP1 " + fmt(tp1) + " (2R).";
+
+      document.getElementById("summary").textContent   = summary;
+      document.getElementById("fluxCell").textContent  = fluxTxt;
+      document.getElementById("swingCell").textContent = "[" + fmt(swingLow) + " – " + fmt(swingHigh) + "]";
+      document.getElementById("oteCell").textContent   = fmt(oteMin) + " – " + fmt(oteMax);
+      document.getElementById("obCell").textContent    = "[" + fmt(ob.low) + " – " + fmt(ob.high) + "]";
+      document.getElementById("obOteCell").textContent = obInOte ? "✅ OB dans l’OTE" : "⚠ OB hors OTE";
+      document.getElementById("ob25Cell").textContent  = fmt(ob25);
+      document.getElementById("entryCell").textContent = fmt(entry);
+      document.getElementById("slCell").textContent    = fmt(sl);
+      document.getElementById("tp1Cell").textContent   = fmt(tp1);
+      document.getElementById("tp2Cell").textContent   = fmt(tp2);
+      document.getElementById("tp3Cell").textContent   = fmt(tp3);
+      document.getElementById("slInfoCell").textContent= slInfo;
+      document.getElementById("lotCell").textContent   = lotSize.toFixed(2);
+      document.getElementById("lotInfoCell").textContent =
+        "Risque ≈ " + riskAmount.toFixed(2) + " (" + riskPercent.toFixed(2) + " % de " + equity.toFixed(2) + "), " +
+        "distance SL ≈ " + riskPerUnit.toFixed(2) + " pts.";
+
+      document.getElementById("scoreFill").style.width = score + "%";
+      document.getElementById("scoreText").textContent = "Score trade : " + score.toFixed(0) + " / 100";
+      document.getElementById("safetyText").textContent = scoreLabel;
+
+      htfCell.textContent       = htfAlignTxt;
+      killzoneCell.textContent  = killTxt;
+      riskGuardCell.textContent = riskGuardTxt || "Pas de limite de risque renseignée.";
+      lossesCell.textContent    = `Trades perdants aujourd’hui : ${losesToday}/${maxLoses}.`;
+      liquidityCell.textContent = liqTxt;
+      fvgCell.textContent       = fvgTxt;
+      proximityCell.textContent = proximityTxt;
+
+      // Feu de décision
+      let gateStatus = "VERT";
+      let gateText   = "Feu vert : setup exploitable si tu es mentalement OK.";
+      if (score < 60 || (dailyLimit > 0 && projectedDaily && projectedDaily > dailyLimit) ||
+          (maxLoses > 0 && losesToday >= maxLoses) || mood === "tilt" || mood === "revenge") {
+        gateStatus = "ROUGE";
+        gateText   = "Feu rouge : selon tes règles (risque / pertes / émotion), tu ne trades pas ce setup.";
+      } else if (score < 75 || mood === "mild") {
+        gateStatus = "ORANGE";
+        gateText   = "Feu orange : possible mais avec prudence (taille réduite ou pas de trade).";
+      }
+      if (gateStatus === "VERT") {
+        gateCell.innerHTML = `<span class="gate-pill" style="background:#16a34a;">FEU VERT</span> – ${gateText}`;
+      } else if (gateStatus === "ORANGE") {
+        gateCell.innerHTML = `<span class="gate-pill" style="background:#f97316;">FEU ORANGE</span> – ${gateText}`;
+      } else {
+        gateCell.innerHTML = `<span class="gate-pill" style="background:#b91c1c;">FEU ROUGE</span> – ${gateText}`;
+      }
+
+      explanationText =
+        `1️⃣ Flux : ${fluxTxt}.\n\n` +
+        `2️⃣ Swing & OTE : swing entre ${fmt(swingLow)} et ${fmt(swingHigh)}, zone OTE ${fmt(oteMin)}–${fmt(oteMax)}.\n\n` +
+        `3️⃣ OB : [${fmt(ob.low)} – ${fmt(ob.high)}], ` +
+        (obInOte ? "dans l’OTE ✅.\n\n" : "en dehors de l’OTE ⚠.\n\n") +
+        `4️⃣ Entrée : ${fmt(entry)}, SL : ${fmt(sl)}, TP1/2/3 : ${fmt(tp1)}, ${fmt(tp2)}, ${fmt(tp3)}.\n\n` +
+        `5️⃣ Money management : risque ≈ ${riskAmount.toFixed(2)} (${riskPercent.toFixed(2)} %), lot ≈ ${lotSize.toFixed(2)}.\n\n` +
+        `6️⃣ Contexte HTF : ${htfAlignTxt}.\n\n` +
+        `7️⃣ Killzone : ${killTxt}\n\n` +
+        `8️⃣ Liquidité & FVG : ${liqTxt}. ${fvgTxt}.\n\n` +
+        `9️⃣ Émotion : ${mood}. Le score final tient compte de ton état mental.\n\n` +
+        `👉 Score final : ${score.toFixed(0)}/100. Gatekeeper : ${gateStatus}.`;
+
+      // IA adaptative : ajout du dernier backtest
+      if (adaptiveStats && adaptiveStats.symbol === symbol.toUpperCase() && adaptiveStats.interval === interval) {
+        explanationText +=
+          `\n\n🔁 Info démo (IA adaptative) : sur le dernier backtest réalisé ici sur ${adaptiveStats.symbol} (${adaptiveStats.interval}), ` +
+          `le bot a trouvé ${adaptiveStats.trades} trades, avec un winrate ≈ ${adaptiveStats.winrate.toFixed(1)} % ` +
+          `et un R moyen ≈ ${adaptiveStats.avgR.toFixed(2)}R. Utilise ces stats comme contexte, pas comme garantie.`;
+      }
+
+      explanationEl.textContent = explanationText;
+
+      resultsEl.style.display = "block";
+
+      lastAnalysis = {
+        symbol: symbol.toUpperCase(),
+        direction,
+        entry,
+        sl,
+        tp1,
+        tp2,
+        tp3,
+        score,
+        lotSize,
+        riskPercent,
+        equity
+      };
+
+      updateLWChart(workCandles, { entry, sl, tp1, tp2, tp3 });
+      if (typeof TradingView !== "undefined") renderTradingView(symbolToTV(symbol));
+    } catch (e) {
+      errorEl.textContent = e.message || "Erreur pendant l’analyse.";
+      errorEl.style.display = "block";
+      lastAnalysis = null;
+    }
+  });
+
+  // --- FBO core simplifié pour le backtest ---
+  function computeBacktestSetup(workCandles, lookback, slOverride) {
+    if (workCandles.length < 20) return null;
+    const flux = detectFlux(workCandles, 10);
+    if (flux === "FLAT") return null;
+    const swing = findSwing(workCandles, flux, Math.min(lookback, workCandles.length - 5));
+    if (!swing) return null;
+    const swingHigh = swing.swingHigh;
+    const swingLow  = swing.swingLow;
+    const { oteMin, oteMax } = computeOTE(swingLow, swingHigh, flux);
+    const ob = findOrderBlock(workCandles, flux);
+    if (!ob) return null;
+
+    const obRange = ob.high - ob.low;
+    if (obRange <= 0) return null;
+    const direction = ob.direction;
+    const ob25 = direction === "LONG"
+      ? ob.low + obRange * 0.25
+      : ob.high - obRange * 0.25;
+    const buffer = obRange * 0.05;
+    let entry, sl;
+
+    if (direction === "LONG") {
+      entry = Math.min(ob.high, oteMax);
+      sl = ob25 - buffer;
+      if (sl >= entry) return null;
+      if (!Number.isNaN(slOverride) && slOverride > 0) sl = entry - slOverride;
+    } else {
+      entry = Math.max(ob.low, oteMin);
+      sl = ob25 + buffer;
+      if (sl <= entry) return null;
+      if (!Number.isNaN(slOverride) && slOverride > 0) sl = entry + slOverride;
+    }
+
+    const riskPerUnit = Math.abs(entry - sl);
+    if (riskPerUnit <= 0) return null;
+
+    let tp1, tp2, tp3;
+    if (direction === "LONG") {
+      tp1 = entry + 2 * riskPerUnit;
+      tp2 = entry + 3 * riskPerUnit;
+      tp3 = entry + 4 * riskPerUnit;
+    } else {
+      tp1 = entry - 2 * riskPerUnit;
+      tp2 = entry - 3 * riskPerUnit;
+      tp3 = entry - 4 * riskPerUnit;
+    }
+
+    return { direction, entry, sl, tp1, tp2, tp3, riskPerUnit };
+  }
+
+  // --- Mode démo / Backtest ---
+  document.getElementById("btnBacktest").addEventListener("click", async () => {
+    const apiKey       = document.getElementById("apiKey").value.trim();
+    const symbol       = document.getElementById("symbol").value.trim();
+    const interval     = document.getElementById("interval").value;
+    const lookback     = parseInt(document.getElementById("lookback").value || "50", 10);
+    const riskPercent  = parseFloat(document.getElementById("riskPercent").value);
+    const valuePerPoint= parseFloat(document.getElementById("valuePerPoint").value);
+
+    const equityLive   = parseFloat(document.getElementById("equity").value);
+    const btInitial    = parseFloat(document.getElementById("btInitialEquity").value);
+    const btMaxTrades  = parseInt(document.getElementById("btMaxTrades").value || "30", 10);
+    const btMaxOffset  = parseInt(document.getElementById("btMaxOffset").value || "150", 10);
+    const slOverride   = parseFloat(document.getElementById("slOverride").value);
+
+    const btErrorEl    = document.getElementById("btError");
+    const btResultsEl  = document.getElementById("btResults");
+    const equityWrapper= document.getElementById("equityWrapper");
+
+    btErrorEl.style.display = "none";
+    btResultsEl.textContent = "";
+    equityWrapper.style.display = "none";
+
+    try {
+      if (!apiKey) throw new Error("Merci de coller ta clé API Twelve Data.");
+      if (!symbol) throw new Error("Merci d’indiquer un symbole.");
+      if (!Number.isFinite(riskPercent) || riskPercent <= 0) {
+        throw new Error("Merci de définir un risque % pour la démo.");
+      }
+      if (!Number.isFinite(valuePerPoint) || valuePerPoint <= 0) {
+        throw new Error("Valeur 1 point invalide.");
+      }
+
+      const startEquity = Number.isFinite(btInitial) && btInitial > 0
+        ? btInitial
+        : equityLive;
+
+      if (!Number.isFinite(startEquity) || startEquity <= 0) {
+        throw new Error("Merci d’indiquer une équité ou un capital initial démo valide.");
+      }
+
+      const candles = await fetchCandlesTwelve(apiKey, symbol, interval);
+      if (candles.length < 60) throw new Error("Pas assez de bougies pour backtester (moins de 60).");
+
+      let maxOffset = Math.min(btMaxOffset, candles.length - 20);
+      if (maxOffset < 30) maxOffset = 30;
+
+      let trades = 0;
+      let wins = 0;
+      let losses = 0;
+      let neutral = 0;
+      let sumR = 0;
+      let equity = startEquity;
+      let maxEquity = startEquity;
+      let maxDD = 0;
+      const equityHistory = [startEquity];
+
+      for (let offset = maxOffset; offset >= 20 && trades < btMaxTrades; offset--) {
+        const workCandles = candles.slice(offset);
+        const setup = computeBacktestSetup(workCandles, lookback, slOverride);
+        if (!setup) continue;
+
+        const { direction, entry, sl, tp1, tp2, tp3, riskPerUnit } = setup;
+
+        // simulate future path: candles indices offset-1..0 (plus récentes)
+        let resultR = null;
+        for (let j = offset - 1; j >= 0; j--) {
+          const c = candles[j];
+          let hitSL = false;
+          let hitTP1 = false, hitTP2 = false, hitTP3 = false;
+
+          if (direction === "LONG") {
+            if (c.low <= sl) hitSL = true;
+            if (c.high >= tp1) hitTP1 = true;
+            if (c.high >= tp2) hitTP2 = true;
+            if (c.high >= tp3) hitTP3 = true;
+          } else {
+            if (c.high >= sl) hitSL = true;
+            if (c.low <= tp1) hitTP1 = true;
+            if (c.low <= tp2) hitTP2 = true;
+            if (c.low <= tp3) hitTP3 = true;
+          }
+
+          if (hitSL) {
+            resultR = -1;
+            break;
+          } else if (hitTP3) {
+            resultR = 4;
+            break;
+          } else if (hitTP2) {
+            resultR = 3;
+            break;
+          } else if (hitTP1) {
+            resultR = 2;
+            break;
+          }
+        }
+
+        if (resultR === null) {
+          neutral++;
+          continue;
+        }
+
+        trades++;
+        sumR += resultR;
+        if (resultR > 0) wins++;
+        else if (resultR < 0) losses++;
+
+        const profit = equity * (riskPercent / 100) * resultR;
+        equity += profit;
+        equityHistory.push(equity);
+        if (equity > maxEquity) maxEquity = equity;
+        const dd = (maxEquity - equity) / maxEquity * 100;
+        if (dd > maxDD) maxDD = dd;
+      }
+
+      if (trades === 0) {
+        btResultsEl.textContent =
+          "Le mode démo n’a pas trouvé de trades FBO exploitables dans cet historique avec ces paramètres.";
+        return;
+      }
+
+      const winrate = (wins / trades) * 100;
+      const avgR    = sumR / trades;
+      const equityChange = ((equity - startEquity) / startEquity) * 100;
+
+      // cartes visuelles
+      btResultsEl.innerHTML =
+        `<div class="bt-stats">
+          <div class="bt-card">
+            <div class="bt-card-title">Trades FBO testés</div>
+            <div class="bt-card-value">${trades}</div>
+            <div class="bt-card-sub">Gagnants : ${wins} | Perdants : ${losses} | Neutres : ${neutral}</div>
+          </div>
+          <div class="bt-card">
+            <div class="bt-card-title">Winrate</div>
+            <div class="bt-card-value">${winrate.toFixed(1)} %</div>
+            <div class="bt-card-sub">R moyen ≈ ${avgR.toFixed(2)}R</div>
+          </div>
+          <div class="bt-card">
+            <div class="bt-card-title">Équité finale</div>
+            <div class="bt-card-value">${equity.toFixed(2)}</div>
+            <div class="bt-card-sub">${equityChange >= 0 ? "Gain" : "Perte"} ≈ ${equityChange.toFixed(2)} %</div>
+          </div>
+          <div class="bt-card">
+            <div class="bt-card-title">Drawdown max</div>
+            <div class="bt-card-value">${maxDD.toFixed(2)} %</div>
+            <div class="bt-card-sub">Simulation pédagogique (H1/M15, bougie par bougie)</div>
+          </div>
+        </div>
+        <div style="margin-top:6px;" class="small">
+          🔎 Ce mode démo utilise exactement ta logique FBO (flux, swing, OTE, OB, entrées, SL, TP) sur les bougies passées 
+          de ${symbol.toUpperCase()} (${interval}). C’est un outil pour sentir la cohérence de la stratégie, pas un backtest 
+          professionnel tick par tick.
+        </div>`;
+
+      updateEquityChart(equityHistory);
+
+      // IA adaptative : on mémorise ces stats
+      adaptiveStats = {
+        symbol: symbol.toUpperCase(),
+        interval,
+        trades,
+        winrate,
+        avgR
+      };
+    } catch (e) {
+      btErrorEl.textContent = e.message || "Erreur pendant le backtest.";
+      btErrorEl.style.display = "block";
+    }
+  });
+
+  // Journal
+  document.getElementById("btnJournal").addEventListener("click", () => {
+    const notes   = document.getElementById("journalNotes").value.trim();
+    const outEl   = document.getElementById("journalOutput");
+    const symbol  = document.getElementById("symbol").value.trim().toUpperCase();
+    const setup   = document.getElementById("setupType").value;
+    const decision= document.getElementById("decisionSelect").value;
+    const mood    = document.getElementById("moodSelect").value;
+    const now     = new Date();
+    const ts      = now.toISOString();
+
+    let line;
+    if (!lastAnalysis) {
+      line =
+        `${ts};${symbol};AUCUN_SETUP;;;;;;;` +
+        `${setup};${decision};${mood};` +
+        `"${notes.replace(/"/g, "'")}"`;
+    } else {
+      const la = lastAnalysis;
+      line =
+        `${ts};${la.symbol};${la.direction};` +
+        `${la.entry.toFixed(2)};${la.sl.toFixed(2)};` +
+        `${la.tp1.toFixed(2)};${la.tp2.toFixed(2)};${la.tp3.toFixed(2)};` +
+        `${la.score.toFixed(0)};${la.lotSize.toFixed(2)};` +
+        `${setup};${decision};${mood};` +
+        `"${notes.replace(/"/g, "'")}"`;
+    }
+
+    outEl.value = (outEl.value ? outEl.value + "\n" : "") + line;
+    document.getElementById("journalNotes").value = "";
+  });
+</script>
+  <script>
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("sw.js").catch(console.error);
+  }
+  </script>
+</body>
+</html>
